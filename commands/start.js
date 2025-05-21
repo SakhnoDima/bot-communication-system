@@ -1,5 +1,5 @@
 const { InlineKeyboard } = require("grammy");
-
+const User = require("../models/User");
 const { roles } = require("../constants");
 
 const keyboard = new InlineKeyboard()
@@ -15,9 +15,23 @@ module.exports = (bot) => {
     const payload = args[1];
 
     if (payload && payload.startsWith("JOIN-")) {
-      const token = payload.split("JOIN-")[1];
+      const inviteCode = payload.split("JOIN-")[1];
 
-      //TODO Перевіряємо чи валідне посилання Оновлюємо значення користувача в БД
+      const provider = await User.findOne({ inviteCode });
+
+      if (!provider) {
+        return ctx.reply("❌ Невірний інвайт-код.");
+      }
+
+      if (provider.isAuth) {
+        return ctx.reply(
+          "⚠️ Цей інвайт вже використано. Зверніться до адміністратора."
+        );
+      }
+      provider.telegramId = ctx.from.id.toString();
+      provider.name = ctx.from.first_name;
+      provider.isAuth = true;
+      await provider.save();
 
       ctx.session.role = roles.PROVIDER.name;
 
@@ -34,7 +48,7 @@ module.exports = (bot) => {
     const selectedRole = ctx.match[1];
 
     await ctx.answerCallbackQuery();
-    await ctx.reply(`✅ Вы выбрали роль: ${selectedRole}`);
+    await ctx.reply(`✅ Ви ибрали роль: ${selectedRole}`);
 
     if (selectedRole === roles.ADMIN.name && userId === roles.ADMIN.id) {
       const adminKeyboard = new InlineKeyboard().text(

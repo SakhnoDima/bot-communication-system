@@ -1,8 +1,17 @@
+const mongoose = require("mongoose");
+require("dotenv").config();
 const { GrammyError, HttpError } = require("grammy");
 
 const bot = require("./bot");
 const { roles } = require("./constants");
 const { roleMiddleware } = require("./middleware");
+
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+  })
+  .catch(console.error);
 
 // bot.command("admin", roleMiddleware(roles.ADMIN), async (ctx) => {
 //   await ctx.reply("Admin ✅");
