@@ -23,6 +23,7 @@ mongoose
 
 require("./commands/start")(bot);
 require("./commands/generate_invite")(bot);
+require("./commands/providers_list")(bot);
 
 bot.on("message", async (ctx) => {
   console.log(ctx.session.role);

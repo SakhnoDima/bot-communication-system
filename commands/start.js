@@ -9,6 +9,16 @@ const keyboard = new InlineKeyboard()
   .row()
   .text("Склад", `select_role:${roles.PROVIDER.name}`);
 
+const adminKeyboard = new InlineKeyboard()
+  .text("Згенерувати посилання", `generate_invite`)
+  .row()
+  .text("Список Складів", `providers_list`);
+
+const managerKeyboard = new InlineKeyboard().text(
+  "Список Складів",
+  `providers_list`
+);
+
 module.exports = (bot) => {
   bot.command("start", async (ctx) => {
     const args = ctx.message.text.split(" ");
@@ -51,11 +61,6 @@ module.exports = (bot) => {
     await ctx.reply(`✅ Ви ибрали роль: ${selectedRole}`);
 
     if (selectedRole === roles.ADMIN.name && userId === roles.ADMIN.id) {
-      const adminKeyboard = new InlineKeyboard().text(
-        "Згенерувати посилання",
-        `generate_invite`
-      );
-
       await ctx.reply("Виберіть команду:", {
         reply_markup: adminKeyboard,
       });
@@ -64,14 +69,18 @@ module.exports = (bot) => {
       selectedRole === roles.MANAGER.name &&
       userId === roles.MANAGER.id
     ) {
-      await ctx.reply("Команди Менеджера:\n/view\n/reports");
+      await ctx.reply("Виберіть команду:", {
+        reply_markup: managerKeyboard,
+      });
       ctx.session.role = selectedRole;
     } else if (
       selectedRole === roles.PROVIDER.name &&
       userId !== roles.ADMIN.id &&
       userId !== roles.MANAGER.id
     ) {
-      await ctx.reply("Команди Склад:\n/start\n/manage\n/stats");
+      await ctx.reply("Виберіть команду:", {
+        reply_markup: managerKeyboard,
+      });
       ctx.session.role = selectedRole;
     } else {
       await ctx.reply("У вас нет доступа. Пожалуйста, повторите попытку.");

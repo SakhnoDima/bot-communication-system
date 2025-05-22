@@ -35,6 +35,7 @@ module.exports = (bot) => {
       role: roles.PROVIDER.name,
       alias: nickname,
       inviteCode: code,
+      isAuth: false,
     });
   });
 };
