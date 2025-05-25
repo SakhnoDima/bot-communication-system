@@ -4,7 +4,6 @@ const roles = {
     name: "Адмін",
   },
   MANAGER: {
-    id: Number(process.env.MANAGER_ID),
     name: "Менеджер",
   },
   PROVIDER: {

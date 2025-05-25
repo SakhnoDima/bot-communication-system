@@ -4,14 +4,8 @@ const { GrammyError, HttpError } = require("grammy");
 
 const bot = require("./bot");
 const { roles } = require("./constants");
+const Message = require("./models/Message");
 const { roleMiddleware } = require("./middleware");
-
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("✅ MongoDB connected");
-  })
-  .catch(console.error);
 
 // bot.command("admin", roleMiddleware(roles.ADMIN), async (ctx) => {
 //   await ctx.reply("Admin ✅");
@@ -22,14 +16,16 @@ mongoose
 // });
 
 require("./commands/start")(bot);
-require("./commands/generate_invite")(bot);
-require("./commands/providers_list")(bot);
+require("./commands/help")(bot);
 
-bot.on("message", async (ctx) => {
-  console.log(ctx.session.role);
+require("./commands/generateInvite")(bot);
+require("./commands/providersList")(bot);
+require("./commands/providerActions")(bot);
+require("./commands/messageToProvider")(bot);
+require("./commands/allMessagesFromProvider")(bot);
+require("./commands/backToMenu")(bot);
 
-  ctx.reply("Привет! Я бот, который поможет вам с управлением ролями.");
-});
+require("./commands/message")(bot);
 
 bot.catch((err) => {
   const ctx = err.ctx;
@@ -44,4 +40,26 @@ bot.catch((err) => {
   }
 });
 
-bot.start();
+const startBot = async () => {
+  const { MONGODB_URI } = process.env;
+
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URIis not defined!");
+  }
+
+  try {
+    await mongoose
+      .connect(MONGODB_URI)
+      .then(() => {
+        console.log("✅ MongoDB connected!");
+      })
+      .catch(console.error);
+
+    await bot.start();
+    console.log("✅ Bot started!");
+  } catch (error) {
+    console.error("Error in  startBot:", error);
+  }
+};
+
+startBot();

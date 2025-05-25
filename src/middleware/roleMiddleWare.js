@@ -7,6 +7,4 @@ const roleMiddleware = (requiredRoleId) => {
   };
 };
 
-module.exports = {
-  roleMiddleware,
-};
+module.exports = roleMiddleware;

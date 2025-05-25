@@ -2,13 +2,15 @@
   "name": "bot-communication-system",
   "version": "1.0.0",
   "description": "Telegram bot",
-  "main": "main.js",
+  "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon main.js"
+    "dev": "nodemon srs/index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@grammyjs/conversations": "^2.1.0",
+    "@grammyjs/hydrate": "^1.4.1",
     "dotenv": "^16.5.0",
     "grammy": "^1.36.1",
     "mongoose": "^8.15.0",
