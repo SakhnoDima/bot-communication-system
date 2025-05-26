@@ -34,7 +34,10 @@ module.exports = (bot) => {
         });
         await msg.save();
 
-        await bot.api.sendMessage(myAccount.manager.telegramId, myMessage);
+        await bot.api.sendMessage(
+          myAccount.manager.telegramId,
+          `✉️ Повідомлення від: ${myAccount.alias}\n\n${myMessage}`
+        );
       } catch (error) {
         console.log("Error saving message:", error);
         await ctx.reply(
