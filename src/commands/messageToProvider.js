@@ -1,16 +1,14 @@
+const { Provider } = require("../models");
+
 module.exports = (bot) => {
   bot.callbackQuery(/^message_to_provider:(.+)$/, async (ctx) => {
-    const provider = ctx.match[1];
+    const [telegramId, _id] = ctx.match[1].split("/");
 
-    // ctx.session.selectedProviderId = provider.telegramId; // сесія selectedProviderId
+    const providerFromDb = await Provider.findById(_id);
 
     await ctx.answerCallbackQuery();
     await ctx.conversation.enter("sendMessageToProviderConversation", {
-      args: [
-        provider.split("/")[0],
-        provider.split("/")[1],
-        provider.split("/")[2],
-      ],
+      args: [telegramId, providerFromDb.alias, _id],
     });
   });
 };
