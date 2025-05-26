@@ -1,7 +1,4 @@
-const roleMiddleware = require("./roleMiddleWare");
-const isAuth = require("./isAuth");
-
 module.exports = {
-  roleMiddleware,
-  isAuth,
+  isAuth: require("./isAuth"),
+  messageGuard: require("./messageGuard"),
 };

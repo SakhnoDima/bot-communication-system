@@ -3,17 +3,6 @@ require("dotenv").config();
 const { GrammyError, HttpError } = require("grammy");
 
 const bot = require("./bot");
-const { roles } = require("./constants");
-const Message = require("./models/Message");
-const { roleMiddleware } = require("./middleware");
-
-// bot.command("admin", roleMiddleware(roles.ADMIN), async (ctx) => {
-//   await ctx.reply("Admin ✅");
-// });
-
-// bot.command("manager", roleMiddleware(roles.MANAGER), async (ctx) => {
-//   await ctx.reply("Manager ✅");
-// });
 
 require("./commands/start")(bot);
 require("./commands/help")(bot);

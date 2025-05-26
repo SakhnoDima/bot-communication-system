@@ -1,13 +1,9 @@
 const { roles } = require("../constants");
-const { isAuth } = require("../middleware");
 const Message = require("../models/Message");
 const User = require("../models/User");
 
 module.exports = (bot) => {
   bot.on("message", async (ctx) => {
-    // console.log(ctx.session.role);
-    // console.log(ctx.update.message.text);
-
     if (ctx.session.role === roles.PROVIDER.name) {
       const myId = ctx.update.message.from.id;
       console.log(myId);

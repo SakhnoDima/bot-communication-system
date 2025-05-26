@@ -4,7 +4,8 @@
   "description": "Telegram bot",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon srs/index.js"
+    "dev": "nodemon srs/index.js",
+    "start:prod": "node src/index.js"
   },
   "author": "",
   "license": "ISC",

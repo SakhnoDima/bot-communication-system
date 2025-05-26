@@ -19,13 +19,13 @@ module.exports = (bot) => {
     filteredProviders.forEach((provider) => {
       managerKeyboard.text(
         provider.alias,
-        `provider_actions:${provider.telegramId}/${provider.alias}/${provider._id}`
+        `provider_actions:${provider.telegramId}/${provider._id}`
       );
       managerKeyboard.row();
     });
 
     const role = ctx.session.role;
-    console.log("Role:", ctx.session.role);
+
     role === roles.ADMIN.name
       ? managerKeyboard.text("<< Назад в меню", `back_to_menu:admin`)
       : managerKeyboard.text("<< Назад в меню", `back_to_menu:manager`);
@@ -33,5 +33,6 @@ module.exports = (bot) => {
     await ctx.callbackQuery.message?.editText("Виберіть Склад:", {
       reply_markup: managerKeyboard,
     });
+    console.log(22);
   });
 };
