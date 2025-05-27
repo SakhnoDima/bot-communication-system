@@ -9,7 +9,6 @@ module.exports = (bot) => {
     console.log("Generating invite...");
 
     await ctx.conversation.enter("generateInviteConversation");
-    console.log("Finish generate");
 
     // await ctx.callbackQuery.message?.editText(
     //   `Для генерації посилання введіть наступну команду в повідомленні:\n /generate_invite, через пробіл роль користувача(${roles.MANAGER.name} або ${roles.PROVIDER.name}) а потім псевдонім користувача.\nНаприклад:\n /generate_invite /Склад /Склад Київ`,

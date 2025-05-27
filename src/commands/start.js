@@ -8,6 +8,11 @@ module.exports = (bot) => {
     const args = ctx.message.text.split(" ");
     const payload = args[1];
 
+    if (!ctx.from) {
+      return ctx.reply(
+        "❌ Помилка: не вдалося отримати інформацію про користувача."
+      );
+    }
     // console.log(userTelegramId);
     // console.log(ctx.update.message.from);
 
@@ -39,7 +44,7 @@ module.exports = (bot) => {
         }
 
         user.telegramId = ctx.from.id.toString();
-        user.name = ctx.from.first_name;
+        user.name = ctx.from.first_name || "Unknown User";
         user.isAuth = true;
         await user.save();
 

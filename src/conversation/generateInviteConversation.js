@@ -38,7 +38,6 @@ const generateInviteConversation = async (conversation, ctx, args) => {
   const role = roleCtx.callbackQuery.data.split(":")[1];
 
   // 2. Запитуємо псевдонім
-
   const nameKeyboard = new InlineKeyboard().text(
     "❌ Скасувати",
     "cancel_conversation_second_step"
@@ -103,7 +102,7 @@ const generateInviteConversation = async (conversation, ctx, args) => {
     managers.forEach((manager) => {
       managersKeyboard.text(
         manager.alias,
-        `managers_list:${manager._id}/${manager.alias}/${manager.telegramId}`
+        `managers_list:${manager.telegramId}`
       );
       managersKeyboard.row();
     });
@@ -138,15 +137,23 @@ const generateInviteConversation = async (conversation, ctx, args) => {
 
     await managerCtx.answerCallbackQuery();
 
-    const data = managerCtx.callbackQuery.data.replace("managers_list:", "");
-    const [managerId, managerAlias, managerTelegramId] = data.split("/");
+    const managerTelegramId = managerCtx.callbackQuery.data
+      .replace("managers_list:", "")
+      .trim();
+
+    const chosenManager = managers.find((manager) => {
+      console.log(manager.telegramId, managerTelegramId);
+
+      return manager.telegramId === managerTelegramId;
+    });
+    console.log(chosenManager);
 
     await Provider.create({
       alias: nickname,
       inviteCode: code,
       manager: {
-        id: managerId,
-        name: managerAlias,
+        id: chosenManager._id,
+        name: chosenManager.alias,
         telegramId: managerTelegramId,
       },
     });
