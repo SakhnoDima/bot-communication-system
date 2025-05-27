@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const { roles } = require("../constants");
 const { detectContactInfo } = require("../middleware");
 const Message = require("../models/Message");
@@ -48,7 +50,7 @@ module.exports = (bot) => {
               hour12: false,
             });
             bot.api.sendMessage(
-              "770217773",
+              process.env.ADMIN_ID,
               `⚠️ Повідомлення від Cкладу: ${myAccount.alias} до Менеджера: ${myAccount.manager.name} містить контактну інформацію. \n\n Текст повідомлення: ${myMessage}\n\n Дата ${nowFormatted} `
             );
           }
