@@ -1,44 +1,57 @@
 const { roles } = require("../constants");
 const { InlineKeyboard } = require("grammy");
-const User = require("../models/User");
-const { Manager, Provider } = require("../models");
+const { Manager, Provider, User } = require("../models");
 
-const generateInviteConversation = async (conversation, ctx, args) => {
-  let messageId = null;
-  // 1. Запитуємо роль
-  const roleKeyboard = new InlineKeyboard()
+const isCancel = (ctx, expected) => {
+  return ctx?.callbackQuery?.data === expected;
+};
+
+const cancelConversation = async (
+  ctx,
+  chatId,
+  messageId,
+  msg = "⚠️ Генерація скасована."
+) => {
+  await ctx.answerCallbackQuery();
+  await ctx.api.editMessageText(chatId, messageId, msg, {
+    parse_mode: "Markdown",
+  });
+};
+
+const extractData = (ctx, prefix) => {
+  return ctx.callbackQuery.data.replace(`${prefix}:`, "").trim();
+};
+
+const askRole = async (conversation, ctx) => {
+  const keyboard = new InlineKeyboard()
     .text(roles.MANAGER.name, `role:${roles.MANAGER.name}`)
     .text(roles.PROVIDER.name, `role:${roles.PROVIDER.name}`)
     .row()
     .text("❌ Скасувати", "cancel_conversation");
 
-  const message = await ctx.reply("👤 Оберіть роль нового користувача:", {
-    reply_markup: roleKeyboard,
+  const msg = await ctx.reply("👤 Оберіть роль нового користувача:", {
+    reply_markup: keyboard,
   });
-  messageId = message.message_id;
+  const messageId = msg.message_id;
 
   const roleCtx = await conversation.waitFor(
     "callback_query:data",
     (ctx) =>
       ctx.callbackQuery.data.startsWith("role:") ||
-      ctx.callbackQuery.data === "cancel_conversation"
+      isCancel(ctx, "cancel_conversation")
   );
 
-  if (roleCtx.callbackQuery.data === "cancel_conversation") {
-    await roleCtx.answerCallbackQuery();
-    await ctx.api.editMessageText(
-      ctx.chat.id,
-      messageId,
-      `⚠️ Генерація посилання скасована.`,
-      { parse_mode: "Markdown" }
-    );
-    return;
+  if (isCancel(roleCtx, "cancel_conversation")) {
+    await cancelConversation(roleCtx, ctx.chat.id, messageId);
+    return null;
   }
-  await roleCtx.answerCallbackQuery();
-  const role = roleCtx.callbackQuery.data.split(":")[1];
 
-  // 2. Запитуємо псевдонім
-  const nameKeyboard = new InlineKeyboard().text(
+  await roleCtx.answerCallbackQuery();
+  return { role: extractData(roleCtx, "role"), messageId };
+};
+
+const askNickname = async (conversation, ctx, messageId, role) => {
+  const keyboard = new InlineKeyboard().text(
     "❌ Скасувати",
     "cancel_conversation_second_step"
   );
@@ -47,114 +60,94 @@ const generateInviteConversation = async (conversation, ctx, args) => {
     ctx.chat.id,
     messageId,
     `✏️ Ви вибрали *${role}*. Введіть псевдонім:`,
-    {
-      reply_markup: nameKeyboard,
-    }
+    { reply_markup: keyboard, parse_mode: "Markdown" }
   );
 
-  const nicknameStep = await conversation.wait();
+  const nicknameCtx = await conversation.wait();
 
-  if (nicknameStep?.callbackQuery?.data === "cancel_conversation_second_step") {
-    await nicknameStep.answerCallbackQuery();
-    await ctx.api.editMessageText(
-      ctx.chat.id,
-      messageId,
-      `⚠️ Генерація посилання скасована.`,
-      { parse_mode: "Markdown" }
-    );
-    return;
+  if (isCancel(nicknameCtx, "cancel_conversation_second_step")) {
+    await cancelConversation(nicknameCtx, ctx.chat.id, messageId);
+    return null;
   }
 
-  if (!nicknameStep.message?.text) {
-    return await ctx.reply("⚠️ Очікувалося текстове повідомлення.");
+  const nickname = nicknameCtx.message?.text?.trim();
+  if (!nickname) {
+    await ctx.reply("⚠️ Очікувалося текстове повідомлення.");
+    return null;
   }
 
-  const nickname = nicknameStep.message.text.trim();
+  return nickname;
+};
 
-  // 3. Валідація
-  if (role !== roles.MANAGER.name && role !== roles.PROVIDER.name) {
-    return await ctx.reply("❗️ Неправильна роль.");
+const askManager = async (conversation, ctx, messageId, nickname) => {
+  const managers = await Manager.find({
+    telegramId: { $ne: null },
+  });
+
+  if (managers.length === 0) {
+    await ctx.reply("❗️ Спочатку додайте менеджера.");
+    return null;
   }
 
-  const existing = await User.findOne({ alias: nickname });
-  if (existing) {
+  const keyboard = new InlineKeyboard();
+  managers.forEach((m) =>
+    keyboard.text(m.alias, `managers_list:${m.telegramId}`).row()
+  );
+  keyboard.text("❌ Скасувати", "cancel_conversation_managers");
+
+  await ctx.api.editMessageText(
+    ctx.chat.id,
+    messageId,
+    `👥 Виберіть менеджера для користувача *${nickname}*`,
+    { reply_markup: keyboard, parse_mode: "Markdown" }
+  );
+
+  const managerCtx = await conversation.waitFor(
+    "callback_query:data",
+    (ctx) =>
+      ctx.callbackQuery.data.startsWith("managers_list:") ||
+      isCancel(ctx, "cancel_conversation_managers")
+  );
+
+  if (isCancel(managerCtx, "cancel_conversation_managers")) {
+    await cancelConversation(managerCtx, ctx.chat.id, messageId);
+    return null;
+  }
+
+  await managerCtx.answerCallbackQuery();
+
+  const telegramId = extractData(managerCtx, "managers_list");
+  return managers.find((m) => m.telegramId === telegramId);
+};
+
+const generateInviteConversation = async (conversation, ctx) => {
+  const roleStep = await askRole(conversation, ctx);
+  if (!roleStep) return;
+
+  const { role, messageId } = roleStep;
+
+  const nickname = await askNickname(conversation, ctx, messageId, role);
+  if (!nickname) return;
+
+  const exists = await User.findOne({ alias: nickname });
+  if (exists)
     return await ctx.reply(
       `⚠️ Користувач з псевдонімом "${nickname}" вже існує.`
     );
-  }
 
-  // 4. Генерація інвайта
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  // 5.Створюємо користувача задежно від ролі
-
   if (role === roles.PROVIDER.name) {
-    const managers = await User.find({
-      role: roles.MANAGER.name,
-      telegramId: { $ne: null },
-    });
-    if (managers.length === 0) {
-      return await ctx.reply("❗️ Спочатку додайте менеджера.");
-    }
-
-    const managersKeyboard = new InlineKeyboard();
-
-    managers.forEach((manager) => {
-      managersKeyboard.text(
-        manager.alias,
-        `managers_list:${manager.telegramId}`
-      );
-      managersKeyboard.row();
-    });
-
-    managersKeyboard.text("❌ Скасувати", "cancel_conversation_managers");
-    await ctx.api.editMessageText(
-      ctx.chat.id,
-      messageId,
-      `👥 Виберіть менеджера для користувача *${nickname}* `,
-      {
-        reply_markup: managersKeyboard,
-      }
-    );
-
-    const managerCtx = await conversation.waitFor(
-      "callback_query:data",
-      (ctx) =>
-        ctx.callbackQuery.data.startsWith("managers_list:") ||
-        ctx.callbackQuery.data === "cancel_conversation_managers"
-    );
-
-    if (managerCtx.callbackQuery.data === "cancel_conversation_managers") {
-      await managerCtx.answerCallbackQuery();
-      await ctx.api.editMessageText(
-        ctx.chat.id,
-        messageId,
-        `⚠️ Генерація посилання скасована.`,
-        { parse_mode: "Markdown" }
-      );
-      return;
-    }
-
-    await managerCtx.answerCallbackQuery();
-
-    const managerTelegramId = managerCtx.callbackQuery.data
-      .replace("managers_list:", "")
-      .trim();
-
-    const chosenManager = managers.find((manager) => {
-      console.log(manager.telegramId, managerTelegramId);
-
-      return manager.telegramId === managerTelegramId;
-    });
-    console.log(chosenManager);
+    const manager = await askManager(conversation, ctx, messageId, nickname);
+    if (!manager) return;
 
     await Provider.create({
       alias: nickname,
       inviteCode: code,
       manager: {
-        id: chosenManager._id,
-        name: chosenManager.alias,
-        telegramId: managerTelegramId,
+        id: manager._id,
+        name: manager.alias,
+        telegramId: manager.telegramId,
       },
     });
   } else {
@@ -164,8 +157,6 @@ const generateInviteConversation = async (conversation, ctx, args) => {
       isAuth: false,
     });
   }
-
-  // 6. Створення користувача
 
   await ctx.api.editMessageText(
     ctx.chat.id,
