@@ -52,6 +52,9 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
         });
 
         await msg.save();
+
+        // TODO тут відправляємо повідомлення на перевірку
+
         await ctx.api.sendMessage(providerTelegram, messageText);
         await ctx.api.editMessageText(
           ctx.chat.id,
