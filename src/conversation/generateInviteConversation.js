@@ -72,7 +72,11 @@ const askNickname = async (conversation, ctx, messageId, role) => {
 
   const nickname = nicknameCtx.message?.text?.trim();
   if (!nickname) {
-    await ctx.reply("⚠️ Очікувалося текстове повідомлення.");
+    await ctx.api.editMessageText(
+      ctx.chat.id,
+      messageId,
+      "⚠️ Очікувалося текстове повідомлення."
+    );
     return null;
   }
 

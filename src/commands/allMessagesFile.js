@@ -1,15 +1,11 @@
 const Message = require("../models/Message");
+const { InputFile } = require("grammy");
 
 module.exports = (bot) => {
-  bot.callbackQuery(/^all_messages_from_provider:(.+)$/, async (ctx) => {
+  bot.callbackQuery(/^all_messages_from_provider_file:(.+)$/, async (ctx) => {
     const providerId = ctx.match[1];
 
     await ctx.answerCallbackQuery();
-
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    console.log("startOfMonth:", startOfMonth);
 
     const messagesFroDb = await Message.find({
       $and: [
@@ -18,11 +14,6 @@ module.exports = (bot) => {
             { "from.telegramId": providerId },
             { "to.telegramId": providerId },
           ],
-        },
-        {
-          createdAt: {
-            $gte: startOfMonth,
-          },
         },
       ],
     }).sort({ createdAt: -1 });
@@ -40,8 +31,13 @@ module.exports = (bot) => {
       })
       .join("\n\n");
 
-    await ctx.reply(`📩 Повідомлення за поточний місяць:\n\n${messagesText}`, {
-      parse_mode: "Markdown",
-    });
+    const buffer = Buffer.from(messagesText, "utf8");
+
+    await ctx.replyWithDocument(
+      new InputFile(
+        buffer,
+        `Повідомлення від:${messagesFroDb[0].from.name}.txt`
+      )
+    );
   });
 };

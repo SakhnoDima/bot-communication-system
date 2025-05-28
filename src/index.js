@@ -12,6 +12,7 @@ require("./commands/providersList")(bot);
 require("./commands/providerActions")(bot);
 require("./commands/messageToProvider")(bot);
 require("./commands/allMessagesFromProvider")(bot);
+require("./commands/allMessagesFile")(bot);
 require("./commands/backToMenu")(bot);
 
 require("./commands/message")(bot);

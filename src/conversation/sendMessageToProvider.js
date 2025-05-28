@@ -1,6 +1,7 @@
 const { InlineKeyboard } = require("grammy");
 const Message = require("../models/Message");
 const User = require("../models/User");
+const { detectContactInfo } = require("../middleware");
 
 const sendMessageToProviderConversation = async (conversation, ctx, args) => {
   const [providerTelegram, providerName, providerId] = args.args;
@@ -52,8 +53,10 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
         });
 
         await msg.save();
-
-        // TODO тут відправляємо повідомлення на перевірку
+        const bot = ctx.bot;
+        detectContactInfo(messageText, userTelegram, providerName).catch(
+          (err) => console.error("Contact detection error:", err)
+        );
 
         await ctx.api.sendMessage(providerTelegram, messageText);
         await ctx.api.editMessageText(

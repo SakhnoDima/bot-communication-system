@@ -8,13 +8,25 @@ module.exports = (bot) => {
 
     const role = ctx.session.role;
     const actionProviderKeyboard = new InlineKeyboard();
+
     actionProviderKeyboard
       .text("Відправити повідомлення", `message_to_provider:${provider}`)
       .row()
       .text(
         "Всі повідомлення",
         `all_messages_from_provider:${provider.split("/")[0]}`
-      )
+      );
+
+    if (ctx.session.role === roles.ADMIN.name) {
+      actionProviderKeyboard
+        .row()
+        .text(
+          "Всі повідомлення файл",
+          `all_messages_from_provider_file:${provider.split("/")[0]}`
+        );
+    }
+
+    actionProviderKeyboard
       .row()
       .text(
         "<< Назад в меню",
