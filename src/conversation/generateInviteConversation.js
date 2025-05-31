@@ -170,7 +170,7 @@ const generateInviteConversation = async (conversation, ctx) => {
   );
 
   await ctx.reply(
-    `✅ Відправте цей інвайт *${nickname}*:\n\`\`\`\nhttps://t.me/@Manager_handler_bot?start=JOIN-${code}\n\`\`\``,
+    `✅ Відправте цей інвайт *${nickname}*:\n\`\`\`\nhttps://t.me/Manager_handler_bot?start=JOIN-${code}\n\`\`\``,
     { parse_mode: "Markdown" }
   );
 };
