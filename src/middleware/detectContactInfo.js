@@ -33,10 +33,6 @@ const detectContactInfo = async (messageText, userNameFrom, userNameTo) => {
       console.log("Знайдений збіг:", match[0]);
       console.log("Кількість цифр:", digitsCount);
       if (digitsCount <= 11) {
-        console.log(
-          `⚠️ Повідомлення від: ${userNameFrom} до: ${userNameTo} містить контактну інформацію. \n\n Текст повідомлення: ${messageText}.\n\n Дата ${nowFormatted}`
-        );
-
         await bot.api.sendMessage(
           ADMIN_ID,
           `⚠️ Повідомлення від: ${userNameFrom} до: ${userNameTo} містить контактну інформацію. \n\n Текст повідомлення: ${messageText}.\n\n Дата ${nowFormatted}`

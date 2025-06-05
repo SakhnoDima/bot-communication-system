@@ -33,6 +33,5 @@ module.exports = (bot) => {
     await ctx.callbackQuery.message?.editText("Виберіть Склад:", {
       reply_markup: managerKeyboard,
     });
-    console.log(22);
   });
 };
