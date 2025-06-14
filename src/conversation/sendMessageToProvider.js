@@ -13,7 +13,7 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
     );
 
     const promptMessage = await ctx.reply(
-        "✉️ Введіть повідомлення для складу або натисніть '❌ Скасувати':",
+        "✉️ Введіть повідомлення для складу (текст, фото або файл) або натисніть '❌ Скасувати':",
         { reply_markup: cancelKeyboard }
     );
 
@@ -30,22 +30,18 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
             return;
         }
 
-        if (update.message?.text) {
-            const messageText = update.message.text.trim();
+        try {
+            const user = await User.findOne({ telegramId: userTelegram });
+            if (!user) throw new Error("User not found");
 
-            try {
-                const { _id, alias } = await User.findOne({
-                    telegramId: userTelegram,
-                });
-
-                console.log("User ID:", _id);
-                console.log("Alias:", alias);
+            if (update.message?.text) {
+                const messageText = update.message.text.trim();
 
                 const msg = new Message({
                     from: {
-                        id: _id,
+                        id: user._id,
                         telegramId: userTelegram,
-                        name: alias,
+                        name: user.alias,
                     },
                     to: {
                         id: providerId,
@@ -57,15 +53,12 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
 
                 await msg.save();
 
-                detectContactInfo(
-                    messageText,
-                    userTelegram,
-                    providerName
-                ).catch((err) =>
-                    console.error("Contact detection error:", err)
+                detectContactInfo(messageText, user.alias, providerName).catch(
+                    (err) => console.error("Contact detection error:", err)
                 );
 
                 await ctx.api.sendMessage(providerTelegram, messageText);
+
                 await ctx.api.editMessageText(
                     ctx.chat.id,
                     promptMessage.message_id,
@@ -76,14 +69,85 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
                 );
 
                 return;
-            } catch (error) {
-                console.error("Error saving message:", error);
-                await ctx.reply(
-                    "❗️ Сталася помилка при збереженні або надсиланні."
+            } else if (update.message?.photo) {
+                const photoArray = update.message.photo;
+                const fileId = photoArray[photoArray.length - 1].file_id;
+
+                const msg = new Message({
+                    from: {
+                        id: user._id,
+                        telegramId: userTelegram,
+                        name: user.alias,
+                    },
+                    to: {
+                        id: providerId,
+                        telegramId: providerTelegram,
+                        name: providerName,
+                    },
+                    text: "[Фото]",
+                });
+
+                await msg.save();
+
+                await ctx.api.sendPhoto(providerTelegram, fileId, {
+                    caption: `📷 Фото від: ${user.alias}`,
+                });
+
+                await ctx.api.editMessageText(
+                    ctx.chat.id,
+                    promptMessage.message_id,
+                    `✅ Фото для *${providerName}* надіслано!`,
+                    {
+                        parse_mode: "Markdown",
+                    }
                 );
 
                 return;
+            } else if (update.message?.document) {
+                const document = update.message.document;
+                const fileId = document.file_id;
+
+                const msg = new Message({
+                    from: {
+                        id: user._id,
+                        telegramId: userTelegram,
+                        name: user.alias,
+                    },
+                    to: {
+                        id: providerId,
+                        telegramId: providerTelegram,
+                        name: providerName,
+                    },
+                    text: "[Файл]",
+                });
+
+                await msg.save();
+
+                await ctx.api.sendDocument(providerTelegram, fileId, {
+                    caption: `📎 Файл від: ${user.alias}`,
+                });
+
+                await ctx.api.editMessageText(
+                    ctx.chat.id,
+                    promptMessage.message_id,
+                    `✅ Файл для *${providerName}* надіслано!`,
+                    {
+                        parse_mode: "Markdown",
+                    }
+                );
+
+                return;
+            } else {
+                await ctx.reply(
+                    "Тип повідомлення не підтримується. Надішліть текст, фото або файл."
+                );
             }
+        } catch (error) {
+            console.error("Error processing message:", error);
+            await ctx.reply(
+                "❗️ Сталася помилка при обробці повідомлення. Спробуйте ще раз."
+            );
+            return;
         }
     }
 };
