@@ -173,10 +173,10 @@ const generateInviteConversation = async (conversation, ctx) => {
         `Користувача *${nickname}* створено з роллю *${role}*.`,
         { parse_mode: "Markdown" }
     );
+    console.log(BOT_LINK);
 
     await ctx.reply(
-        `✅ Відправте цей інвайт *${nickname}*:\n\`\`\`\nhttps://t.me/TdpetrovskiyBot?start=JOIN-${code}\n\`\`\``,
-        { parse_mode: "Markdown" }
+        `✅ Відправте цей інвайт *${nickname}*:\nhttps://t.me/TdpetrovskiyBot?start=JOIN-${code}`
     );
 };
 
