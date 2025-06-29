@@ -4,8 +4,9 @@ const Provider = require("./Provider");
 const Message = require("./Message");
 
 module.exports = {
-  User,
-  Manager,
-  Provider,
-  Message,
+    User,
+    Manager,
+    Provider,
+    Message,
+    ContentManager: require("./ConrentManager"),
 };

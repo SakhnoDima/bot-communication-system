@@ -7,7 +7,7 @@ module.exports = (bot) => {
     bot.on("message", async (ctx) => {
         if (!ctx.session || !ctx.session.role) {
             await ctx.reply(
-                "Ваша роль не визначена.\nСкористайтесь командой /start для перезапуску бота. "
+                "Ваша роль не визначена.\nСкористайтесь командою /start для перезапуску бота. "
             );
             return;
         }
@@ -18,46 +18,51 @@ module.exports = (bot) => {
             return;
         }
 
-        if (ctx.session.role === roles.PROVIDER.name) {
+        if (
+            ctx.session.role === roles.PROVIDER.name ||
+            ctx.session.role === roles.CONTENT_MANAGER.name
+        ) {
             const myId = ctx.update.message.from.id;
 
-            const myMessage = ctx.update.message.text;
             try {
                 const myAccount = await User.findOne({
                     telegramId: myId,
                 });
 
+                const msg = new Message({
+                    from: {
+                        telegramId: myAccount.telegramId,
+                        id: myAccount._id,
+                        name: myAccount.alias,
+                    },
+                    to: {
+                        telegramId: myAccount.manager.telegramId,
+                        id: myAccount.manager.id,
+                        name: myAccount.manager.name,
+                    },
+                    text: "",
+                });
+
                 if (ctx.message.text) {
                     const myMessage = ctx.message.text;
 
-                    const msg = new Message({
-                        from: {
-                            telegramId: myAccount.telegramId,
-                            id: myAccount._id,
-                            name: myAccount.alias,
-                        },
-                        to: {
-                            telegramId: myAccount.manager.telegramId,
-                            id: myAccount.manager.id,
-                            name: myAccount.manager.name,
-                        },
-                        text: myMessage,
-                    });
-                    await msg.save();
+                    msg.text = myMessage;
 
                     await bot.api.sendMessage(
                         myAccount.manager.telegramId,
                         `✉️ Повідомлення від: ${myAccount.alias}\n\n${myMessage}`
                     );
-
-                    detectContactInfo(
-                        myMessage,
-                        myAccount.alias,
-                        myAccount.manager.name
-                    );
+                    if (ctx.session.role === roles.PROVIDER.name)
+                        detectContactInfo(
+                            myMessage,
+                            myAccount.alias,
+                            myAccount.manager.name
+                        );
                 } else if (ctx.message.photo) {
                     const photoArray = ctx.message.photo;
                     const fileId = photoArray[photoArray.length - 1].file_id;
+
+                    msg.text = "[Фото]";
 
                     await bot.api.sendPhoto(
                         myAccount.manager.telegramId,
@@ -70,6 +75,8 @@ module.exports = (bot) => {
                     const document = ctx.message.document;
                     const fileId = document.file_id;
 
+                    msg.text = "[Файл]";
+
                     await bot.api.sendDocument(
                         myAccount.manager.telegramId,
                         fileId,
@@ -80,6 +87,7 @@ module.exports = (bot) => {
                 } else {
                     await ctx.reply("Тип повідомлення не підтримується.");
                 }
+                await msg.save();
             } catch (error) {
                 console.log("Error saving message:", error);
                 await ctx.reply(

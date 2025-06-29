@@ -1,6 +1,6 @@
 const { roles } = require("../constants");
 const { InlineKeyboard } = require("grammy");
-const { Manager, Provider, User } = require("../models");
+const { Manager, Provider, User, ContentManager } = require("../models");
 
 const isCancel = (ctx, expected) => {
     return ctx?.callbackQuery?.data === expected;
@@ -26,6 +26,7 @@ const askRole = async (conversation, ctx) => {
     const keyboard = new InlineKeyboard()
         .text(roles.MANAGER.name, `role:${roles.MANAGER.name}`)
         .text(roles.PROVIDER.name, `role:${roles.PROVIDER.name}`)
+        .text(roles.CONTENT_MANAGER.name, `role:${roles.CONTENT_MANAGER.name}`)
         .row()
         .text("❌ Скасувати", "cancel_conversation");
 
@@ -89,7 +90,11 @@ const askManager = async (conversation, ctx, messageId, nickname) => {
     });
 
     if (managers.length === 0) {
-        await ctx.reply("❗️ Спочатку додайте менеджера.");
+        await ctx.api.editMessageText(
+            ctx.chat.id,
+            messageId,
+            "❗️ Спочатку додайте менеджера."
+        );
         return null;
     }
 
@@ -141,7 +146,7 @@ const generateInviteConversation = async (conversation, ctx) => {
 
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    if (role === roles.PROVIDER.name) {
+    if (role === roles.PROVIDER.name || role === roles.CONTENT_MANAGER.name) {
         const manager = await askManager(
             conversation,
             ctx,
@@ -150,15 +155,27 @@ const generateInviteConversation = async (conversation, ctx) => {
         );
         if (!manager) return;
 
-        await Provider.create({
-            alias: nickname,
-            inviteCode: code,
-            manager: {
-                id: manager._id,
-                name: manager.alias,
-                telegramId: manager.telegramId,
-            },
-        });
+        if (role === roles.PROVIDER.name) {
+            await Provider.create({
+                alias: nickname,
+                inviteCode: code,
+                manager: {
+                    id: manager._id,
+                    name: manager.alias,
+                    telegramId: manager.telegramId,
+                },
+            });
+        } else {
+            await ContentManager.create({
+                alias: nickname,
+                inviteCode: code,
+                manager: {
+                    id: manager._id,
+                    name: manager.alias,
+                    telegramId: manager.telegramId,
+                },
+            });
+        }
     } else {
         await Manager.create({
             alias: nickname,
@@ -176,6 +193,7 @@ const generateInviteConversation = async (conversation, ctx) => {
 
     await ctx.reply(
         `✅ Відправте цей інвайт *${nickname}*:\nhttps://t.me/TdpetrovskiyBot?start=JOIN-${code}`
+        //`✅ Відправте цей інвайт *${nickname}*:\nhttps://t.me/Manager_handler_bot?start=JOIN-${code}`
     );
 };
 

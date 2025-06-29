@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const User = require("./User");
 const { roles } = require("../constants");
 
-const providerSchema = new mongoose.Schema({
+const contentManagerSchema = new mongoose.Schema({
     manager: {
         id: {
             type: mongoose.Schema.Types.ObjectId,
@@ -14,4 +14,7 @@ const providerSchema = new mongoose.Schema({
     },
 });
 
-module.exports = User.discriminator(roles.PROVIDER.name, providerSchema);
+module.exports = User.discriminator(
+    roles.CONTENT_MANAGER.name,
+    contentManagerSchema
+);

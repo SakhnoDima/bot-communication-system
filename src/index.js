@@ -12,10 +12,12 @@ require("./commands/generateInvite")(bot);
 require("./commands/providersList")(bot);
 require("./commands/providerActions")(bot);
 require("./commands/messageToProvider")(bot);
-require("./commands/allMessagesFromProvider")(bot);
+require("./commands/allMessageList")(bot);
 require("./commands/allMessagesFile")(bot);
 require("./commands/backToMenu")(bot);
 
+require("./commands/contentManager")(bot);
+require("./commands/messageToContentManager")(bot);
 require("./commands/message")(bot);
 
 bot.catch((err) => {

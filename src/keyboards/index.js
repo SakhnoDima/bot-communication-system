@@ -1,22 +1,21 @@
 const { InlineKeyboard } = require("grammy");
 
 const adminKeyboard = new InlineKeyboard()
-  .text("Згенерувати посилання", `generate_invite`)
-  .row()
-  .text("Список Складів", `providers_list`);
+    .text("Згенерувати посилання", `generate_invite`)
+    .row()
+    .text("Список Складів", `providers_list`);
 
-const managerKeyboard = new InlineKeyboard().text(
-  "Список Складів",
-  `providers_list`
-);
+const managerKeyboard = new InlineKeyboard()
+    .text("Список Складів", `providers_list`)
+    .text("Контент менеджер", `content_manager`);
 
 const backToMenuKeyboard = new InlineKeyboard().text(
-  "<< Назад в меню",
-  "back_to_menu:admin"
+    "<< Назад в меню",
+    "back_to_menu:admin"
 );
 
 module.exports = {
-  adminKeyboard,
-  managerKeyboard,
-  backToMenuKeyboard,
+    adminKeyboard,
+    managerKeyboard,
+    backToMenuKeyboard,
 };
