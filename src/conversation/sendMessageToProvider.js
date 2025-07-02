@@ -69,7 +69,7 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
                     );
                 }
 
-                await ctx.api.sendMessage(providerTelegram, messageText);
+                //await ctx.api.sendMessage(providerTelegram, messageText);
 
                 await ctx.api.editMessageText(
                     ctx.chat.id,
@@ -99,12 +99,17 @@ const sendMessageToProviderConversation = async (conversation, ctx, args) => {
                 );
             } else if (update.message?.document) {
                 const document = update.message.document;
+                const caption = `📎 Файл від: ${manager.alias}. ${
+                    update.message.caption
+                        ? `Підпис: ${update.message.caption}`
+                        : ``
+                } `;
                 const fileId = document.file_id;
 
                 msg.text = "[Файл]";
 
                 await ctx.api.sendDocument(providerTelegram, fileId, {
-                    caption: `📎 Файл від: ${manager.alias}`,
+                    caption: caption,
                 });
 
                 await ctx.api.editMessageText(
